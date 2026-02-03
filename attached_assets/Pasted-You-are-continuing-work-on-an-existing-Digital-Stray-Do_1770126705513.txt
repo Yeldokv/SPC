@@ -1,0 +1,141 @@
+You are continuing work on an existing Digital Stray Dog Mapping & Management System.
+OBJECTIVE
+Upgrade the system to support a hierarchical, role‑based authentication and authorization model suitable for local‑body‑level government operations, while maintaining data integrity and preventing false or garbage reports.
+The authentication system must be simple, secure, and realistic, but OTP/SMS gateways can be mocked.
+
+🔐 AUTHENTICATION MODEL (MANDATORY)
+Implement a single authentication system with mobile number–based login, and role‑based access control (RBAC).
+Login Method (All Users)
+Mobile number login (10 digits)
+OTP verification
+OTP logic can be mocked (static OTP or console‑logged)
+No email login
+No anonymous access
+This is required to:
+Reduce fake reports
+Improve accountability
+Align with government‑style systems
+👥 USER ROLES & HIERARCHY (VERY IMPORTANT)
+Implement the following roles, with strict permission boundaries.
+1️⃣ Citizen User (Default Role)
+Who: General public
+Access & Capabilities:
+
+Login using mobile number
+Submit stray dog reports
+View general hotspot map (read‑only)
+Track status of their own reports
+Submit feedback
+Restrictions:
+Cannot view reporter details of others
+Cannot see admin dashboards
+Cannot modify reports after submission
+2️⃣ Local Body Official (LSGI / Panchayat / Municipality)
+Who: Government employees at local body level
+Each official must be mapped to a specific local body.
+
+Access & Capabilities:
+
+View reports only within their jurisdiction
+Verify citizen reports
+Update report status (action taken / closed)
+Mark ABC / vaccination activities in their area
+View local analytics (their area only)
+Restrictions:
+Cannot access other local bodies’ data
+Cannot manage users
+Cannot change system rules
+3️⃣ District / Department Admin
+Who: Higher‑level Animal Husbandry / coordinating authority
+Access & Capabilities:
+
+View data across all local bodies
+Compare hotspot trends between regions
+Monitor ABC & vaccination coverage
+View performance analytics of local bodies
+Restrictions:
+Cannot modify system configuration
+Cannot delete data
+4️⃣ System Admin (Project Team / Platform Owners)
+Who: You / core team
+Access & Capabilities (Full Control):
+
+Create & manage local bodies
+Assign officials to local bodies
+Manage user roles
+Access all dashboards
+Override report status (with audit log)
+View system‑wide analytics
+Manage feedback & abuse reports
+🧩 DATABASE CHANGES (MANDATORY)
+Extend the database schema with:
+Users Table
+id
+mobile_number
+role (citizen / local_official / district_admin / system_admin)
+local_body_id (nullable)
+created_at
+last_login
+Local Bodies Table
+id
+name
+type (Panchayat / Municipality / Corporation)
+district
+boundary_reference (can be mocked)
+Audit Logs Table
+action
+performed_by
+target_entity
+timestamp
+🖥️ UI / UX REQUIREMENTS
+Login Flow
+Single login screen
+Role determined automatically after login
+Redirect user to role‑specific dashboard
+Dashboards
+Citizen Dashboard
+Local Body Dashboard
+District Dashboard
+System Admin Dashboard
+Each dashboard must:
+Show only relevant data
+Hide inaccessible routes
+Display role clearly (badge / header)
+🔒 SECURITY & DATA INTEGRITY RULES
+All backend routes must enforce role checks
+No frontend‑only security
+Prevent cross‑local‑body access
+Soft‑delete only (no hard deletes)
+All admin actions logged
+🧠 ADDITIONAL HIGH‑VALUE FEATURES (ADD THESE)
+Report Credibility Scoring
+Score reports based on:
+Verified user
+Photo present
+Report frequency
+Display score to admins only
+Abuse & Spam Control
+Flag excessive reporting from same user
+Allow admin to temporarily disable a user
+Log abuse actions
+Transparency Indicators
+Show “Verified by Local Body” badge
+Show “Action Taken” timeline (non‑sensitive)
+🚫 CONSTRAINTS
+No real SMS gateway
+No Aadhaar / govt auth
+No paid auth services
+OTP can be mocked
+📘 DOCUMENTATION UPDATE
+Update README to include:
+Role hierarchy
+Access control rules
+Mocked OTP explanation
+Governance alignment
+🎯 FINAL GOAL
+The system must now clearly demonstrate:
+Accountability
+Jurisdiction‑based governance
+Reduced false reporting
+Readiness for real government deployment
+Proceed by modifying existing code without breaking earlier features.

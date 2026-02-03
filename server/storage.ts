@@ -1,38 +1,97 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
+import { 
+  reports, zones, interventions,
+  type Report, type InsertReport,
+  type Zone, type InsertZone,
+  type Intervention, type InsertIntervention
+} from "@shared/schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // Reports
+  getReports(): Promise<Report[]>;
+  getReport(id: number): Promise<Report | undefined>;
+  createReport(report: InsertReport): Promise<Report>;
+  updateReportStatus(id: number, status: string): Promise<Report | undefined>;
+  
+  // Zones
+  getZones(): Promise<Zone[]>;
+  createZone(zone: InsertZone): Promise<Zone>;
+  
+  // Interventions
+  getInterventions(): Promise<Intervention[]>;
+  createIntervention(intervention: InsertIntervention): Promise<Intervention>;
+
+  // Analytics
+  getAnalyticsStats(): Promise<{
+    totalReports: number;
+    byCategory: Record<string, number>;
+    byStatus: Record<string, number>;
+  }>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-
-  constructor() {
-    this.users = new Map();
+export class DatabaseStorage implements IStorage {
+  async getReports(): Promise<Report[]> {
+    return await db.select().from(reports).orderBy(desc(reports.createdAt));
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async getReport(id: number): Promise<Report | undefined> {
+    const [report] = await db.select().from(reports).where(eq(reports.id, id));
+    return report;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async createReport(insertReport: InsertReport): Promise<Report> {
+    const [report] = await db.insert(reports).values(insertReport).returning();
+    return report;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async updateReportStatus(id: number, status: string): Promise<Report | undefined> {
+    const [report] = await db.update(reports)
+      .set({ status })
+      .where(eq(reports.id, id))
+      .returning();
+    return report;
+  }
+
+  async getZones(): Promise<Zone[]> {
+    return await db.select().from(zones);
+  }
+
+  async createZone(insertZone: InsertZone): Promise<Zone> {
+    const [zone] = await db.insert(zones).values(insertZone).returning();
+    return zone;
+  }
+
+  async getInterventions(): Promise<Intervention[]> {
+    return await db.select().from(interventions).orderBy(desc(interventions.date));
+  }
+
+  async createIntervention(insertIntervention: InsertIntervention): Promise<Intervention> {
+    const [intervention] = await db.insert(interventions).values(insertIntervention).returning();
+    return intervention;
+  }
+
+  async getAnalyticsStats() {
+    const allReports = await this.getReports();
+    
+    const totalReports = allReports.length;
+    
+    const byCategory = allReports.reduce((acc, report) => {
+      acc[report.category] = (acc[report.category] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const byStatus = allReports.reduce((acc, report) => {
+      acc[report.status] = (acc[report.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      totalReports,
+      byCategory,
+      byStatus
+    };
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

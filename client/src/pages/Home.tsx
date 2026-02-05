@@ -58,6 +58,14 @@ export default function Home() {
         form.reset();
         setImagePreview(null);
       },
+      onError: (error: any) => {
+        const message = error?.message || "Failed to submit report. The file might be too large.";
+        toast({
+          title: "Submission Failed",
+          description: message,
+          variant: "destructive",
+        });
+      },
     });
   };
 

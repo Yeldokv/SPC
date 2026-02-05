@@ -36,6 +36,10 @@ function LocationMarker({ onSelect }: { onSelect: (lat: number, lng: number) => 
     },
   });
 
+  useEffect(() => {
+    map.locate();
+  }, [map]);
+
   return position === null ? null : (
     <Marker position={position} />
   );

@@ -1,6 +1,6 @@
 # Netlify Deployment Guide
 
-This guide will help you deploy the Digital Stray Dog Mapping & Management System to Netlify.
+This guide will help you deploy Straystat to Netlify.
 
 ## Prerequisites
 

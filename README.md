@@ -1,4 +1,4 @@
-# Digital Stray Dog Mapping & Management System
+# Straystat
 
 A comprehensive web application for mapping, tracking, and managing stray dog populations with role-based access control for government operations.
 

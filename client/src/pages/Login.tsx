@@ -32,7 +32,7 @@ export default function Login() {
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg">
               <Shield className="w-6 h-6" />
             </div>
-            <span>SafePaws<span className="text-accent">Civic</span></span>
+            <span>Straystat</span>
           </div>
         </div>
 

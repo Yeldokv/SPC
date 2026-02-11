@@ -28,7 +28,7 @@ export function Navigation() {
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white">
             <Shield className="w-5 h-5" />
           </div>
-          <span>SafePaws<span className="text-accent">Civic</span></span>
+          <span>Straystat</span>
         </Link>
 
         {/* Desktop Nav */}
@@ -37,8 +37,8 @@ export function Navigation() {
             <Link key={link.href} href={link.href}>
               <div className={`
                 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer
-                ${location === link.href 
-                  ? "bg-primary text-primary-foreground shadow-md" 
+                ${location === link.href
+                  ? "bg-primary text-primary-foreground shadow-md"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"}
               `}>
                 <link.icon className="w-4 h-4" />
@@ -46,7 +46,7 @@ export function Navigation() {
               </div>
             </Link>
           ))}
-          
+
           <div className="ml-4 pl-4 border-l border-border">
             {user ? (
               <Button variant="ghost" size="sm" onClick={logout} className="text-destructive hover:text-destructive hover:bg-destructive/10">
@@ -74,7 +74,7 @@ export function Navigation() {
         <div className="md:hidden border-t bg-background p-4 space-y-2 shadow-lg animate-in slide-in-from-top-2">
           {navLinks.filter(l => l.show).map((link) => (
             <Link key={link.href} href={link.href}>
-              <div 
+              <div
                 className={`
                   flex items-center gap-3 px-4 py-3 rounded-xl transition-colors cursor-pointer
                   ${location === link.href ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover:bg-muted"}

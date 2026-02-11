@@ -3,7 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { format } from "date-fns";
-import { MapPin, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { MapPin, AlertCircle, CheckCircle2, Clock, ImageOff } from "lucide-react";
+import { useState, useEffect } from "react";
 
 interface ReportCardProps {
   report: Report;
@@ -25,18 +26,36 @@ const categoryLabels = {
 };
 
 export function ReportCard({ report, onUpdateStatus, showActions = false }: ReportCardProps) {
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    if (report.imagePath) {
+      console.log(`Report ${report.id} - Image path length: ${report.imagePath.length} chars`);
+      console.log(`Report ${report.id} - Starts with: ${report.imagePath.substring(0, 30)}...`);
+    } else {
+      console.log(`Report ${report.id} - No image path`);
+    }
+  }, [report.id, report.imagePath]);
+
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow duration-300 border-border/60">
       <div className="relative h-48 w-full bg-slate-100">
-        {report.imagePath ? (
-          <img 
-            src={report.imagePath} 
-            alt="Report" 
+        {report.imagePath && !imageError ? (
+          <img
+            src={report.imagePath}
+            alt="Report"
             className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+            onError={(e) => {
+              console.error(`Failed to load image for report ${report.id}:`, e);
+              console.error(`Image src length: ${report.imagePath?.length || 0}`);
+              setImageError(true);
+            }}
+            loading="lazy"
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-muted-foreground bg-muted/50">
-            <AlertCircle className="w-12 h-12 opacity-20" />
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground bg-muted/50">
+            <ImageOff className="w-12 h-12 opacity-20 mb-2" />
+            <span className="text-xs opacity-50">Image unavailable</span>
           </div>
         )}
         <div className="absolute top-3 right-3">
@@ -73,8 +92,8 @@ export function ReportCard({ report, onUpdateStatus, showActions = false }: Repo
       {showActions && report.status !== 'closed' && (
         <CardFooter className="pt-0 flex gap-2">
           {report.status === 'pending' && (
-            <Button 
-              className="flex-1 bg-blue-600 hover:bg-blue-700" 
+            <Button
+              className="flex-1 bg-blue-600 hover:bg-blue-700"
               size="sm"
               onClick={() => onUpdateStatus?.(report.id, 'verified')}
             >
@@ -82,9 +101,9 @@ export function ReportCard({ report, onUpdateStatus, showActions = false }: Repo
               Verify
             </Button>
           )}
-          <Button 
-            className="flex-1" 
-            variant="outline" 
+          <Button
+            className="flex-1"
+            variant="outline"
             size="sm"
             onClick={() => onUpdateStatus?.(report.id, 'closed')}
           >

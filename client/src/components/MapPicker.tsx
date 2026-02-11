@@ -45,12 +45,12 @@ function LocationMarker({ onSelect }: { onSelect: (lat: number, lng: number) => 
   );
 }
 
-export function MapPicker({ onLocationSelect, initialLat = 51.505, initialLng = -0.09 }: MapPickerProps) {
+export function MapPicker({ onLocationSelect, initialLat = 10.8505, initialLng = 76.2711 }: MapPickerProps) {
   return (
     <div className="h-[300px] w-full rounded-xl overflow-hidden border-2 border-border shadow-sm">
-      <MapContainer 
-        center={[initialLat, initialLng]} 
-        zoom={13} 
+      <MapContainer
+        center={[initialLat, initialLng]}
+        zoom={13}
         scrollWheelZoom={false}
         className="h-full w-full z-0"
       >

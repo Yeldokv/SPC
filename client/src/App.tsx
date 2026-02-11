@@ -7,7 +7,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import MapPage from "@/pages/MapPage";
-import Login from "@/pages/Login";
+import AuthPage from "@/pages/AuthPage";
 import AdminDashboard from "@/pages/AdminDashboard";
 import Operations from "@/pages/Operations";
 
@@ -16,7 +16,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/map" component={MapPage} />
-      <Route path="/login" component={Login} />
+      <Route path="/login" component={AuthPage} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/operations" component={Operations} />
       <Route component={NotFound} />

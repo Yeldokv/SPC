@@ -4,8 +4,18 @@ import { z } from "zod";
 
 // === TABLE DEFINITIONS ===
 
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  phoneNumber: text("phone_number").notNull().unique(),
+  role: text("role").notNull().default("user"), // 'user', 'admin'
+  otp: text("otp"), // temporary storage for OTP
+  otpExpiresAt: timestamp("otp_expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const reports = pgTable("reports", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id), // Link report to user
   latitude: doublePrecision("latitude").notNull(),
   longitude: doublePrecision("longitude").notNull(),
   category: text("category").notNull(), // 'single', 'group', 'aggressive', 'injured'
@@ -34,10 +44,18 @@ export const interventions = pgTable("interventions", {
 
 // === SCHEMAS ===
 
-export const insertReportSchema = createInsertSchema(reports).omit({ 
-  id: true, 
-  createdAt: true, 
-  status: true 
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  otp: true,
+  otpExpiresAt: true,
+});
+
+export const insertReportSchema = createInsertSchema(reports).omit({
+  id: true,
+  createdAt: true,
+  status: true,
+  userId: true
 }).extend({
   description: z.string().optional(),
 });
@@ -51,6 +69,8 @@ export const updateReportStatusSchema = z.object({
 
 // === TYPES ===
 
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Report = typeof reports.$inferSelect;
 export type InsertReport = z.infer<typeof insertReportSchema>;
 export type Zone = typeof zones.$inferSelect;

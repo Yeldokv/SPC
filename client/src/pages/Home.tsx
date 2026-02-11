@@ -1,4 +1,5 @@
 import { useCreateReport } from "@/hooks/use-reports";
+import { useAuth } from "@/hooks/use-auth";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,6 +12,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { insertReportSchema } from "@shared/schema";
 import { z } from "zod";
+import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import { Loader2, Camera, MapPin, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 
@@ -23,6 +26,9 @@ const formSchema = insertReportSchema.extend({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function Home() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const createReport = useCreateReport();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -38,16 +44,91 @@ export default function Home() {
     },
   });
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = (file: File, maxSizeMB: number = 2): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Calculate new dimensions to keep image under size limit
+          const maxDimension = 1920; // Max width or height
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = (height / width) * maxDimension;
+              width = maxDimension;
+            } else {
+              width = (width / height) * maxDimension;
+              height = maxDimension;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          // Start with high quality and reduce if needed
+          let quality = 0.9;
+          let result = canvas.toDataURL('image/jpeg', quality);
+
+          // Reduce quality until size is acceptable
+          while (result.length > maxSizeMB * 1024 * 1024 && quality > 0.1) {
+            quality -= 0.1;
+            result = canvas.toDataURL('image/jpeg', quality);
+          }
+
+          resolve(result);
+        };
+        img.onerror = reject;
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setImagePreview(result);
-        form.setValue("imagePath", result); // In a real app, upload to S3 here
-      };
-      reader.readAsDataURL(file);
+      try {
+        // Check file size
+        const fileSizeMB = file.size / (1024 * 1024);
+
+        if (fileSizeMB > 10) {
+          toast({
+            title: "Image Too Large",
+            description: "Please select an image smaller than 10MB",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        toast({
+          title: "Processing Image",
+          description: "Compressing image for upload...",
+        });
+
+        const compressed = await compressImage(file, 2); // Compress to max 2MB
+        setImagePreview(compressed);
+        form.setValue("imagePath", compressed);
+
+        toast({
+          title: "Image Ready",
+          description: "Image has been optimized and is ready to submit",
+        });
+      } catch (error) {
+        console.error("Image processing error:", error);
+        toast({
+          title: "Image Processing Failed",
+          description: "Could not process the image. Please try a different file.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -99,14 +180,14 @@ export default function Home() {
       <section className="bg-primary text-primary-foreground py-12 md:py-20 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-10 mix-blend-overlay"></div>
         {/* Unsplash image used for subtle texture: Dog running in field */}
-        
+
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-2xl">
             <h1 className="text-4xl md:text-5xl font-display font-bold mb-4 tracking-tight">
               Report Stray Dogs
             </h1>
             <p className="text-lg md:text-xl opacity-90 mb-8 leading-relaxed">
-              Help us maintain a safe community and ensure humane treatment for stray animals. 
+              Help us maintain a safe community and ensure humane treatment for stray animals.
               Your reports help coordinate vaccination and care efforts.
             </p>
           </div>
@@ -127,7 +208,7 @@ export default function Home() {
             <CardContent className="pt-6">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                  
+
                   {/* Category Selection */}
                   <FormField
                     control={form.control}
@@ -197,11 +278,11 @@ export default function Home() {
                       <MapPin className="w-4 h-4" />
                       Location
                     </FormLabel>
-                    <MapPicker 
+                    <MapPicker
                       onLocationSelect={(lat, lng) => {
                         form.setValue("latitude", lat);
                         form.setValue("longitude", lng);
-                      }} 
+                      }}
                     />
                     {form.formState.errors.latitude && (
                       <p className="text-sm font-medium text-destructive">
@@ -218,10 +299,10 @@ export default function Home() {
                       <FormItem>
                         <FormLabel>Additional Details</FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder="Describe the dog(s), their behavior, or any specific landmarks..." 
+                          <Textarea
+                            placeholder="Describe the dog(s), their behavior, or any specific landmarks..."
                             className="resize-none h-32 bg-slate-50"
-                            {...field} 
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -231,24 +312,34 @@ export default function Home() {
 
                   {/* Ethics Disclaimer */}
                   <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-800 border border-blue-100">
-                    <strong>Note:</strong> This system supports humane, ABC (Animal Birth Control) based management only. 
+                    <strong>Note:</strong> This system supports humane, ABC (Animal Birth Control) based management only.
                     We do not support or facilitate inhumane removal.
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full h-12 text-lg font-semibold shadow-lg shadow-primary/20"
-                    disabled={createReport.isPending}
-                  >
-                    {createReport.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      "Submit Report"
-                    )}
-                  </Button>
+                  {!user ? (
+                    <Button
+                      type="button"
+                      onClick={() => setLocation("/login")}
+                      className="w-full h-12 text-lg font-semibold shadow-lg shadow-primary/20"
+                    >
+                      Login to Submit Report
+                    </Button>
+                  ) : (
+                    <Button
+                      type="submit"
+                      className="w-full h-12 text-lg font-semibold shadow-lg shadow-primary/20"
+                      disabled={createReport.isPending}
+                    >
+                      {createReport.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        "Submit Report"
+                      )}
+                    </Button>
+                  )}
                 </form>
               </Form>
             </CardContent>

@@ -3,12 +3,16 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import { setupAuth } from "./auth";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  
+
+  // Setup Auth
+  setupAuth(app);
+
   // Reports
   app.get(api.reports.list.path, async (req, res) => {
     const reports = await storage.getReports();
@@ -60,10 +64,10 @@ export async function registerRoutes(
       const zone = await storage.createZone(input);
       res.status(201).json(zone);
     } catch (err) {
-        if (err instanceof z.ZodError) {
-            return res.status(400).json({ message: err.errors[0].message });
-        }
-        throw err;
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
     }
   });
 
@@ -79,10 +83,10 @@ export async function registerRoutes(
       const intervention = await storage.createIntervention(input);
       res.status(201).json(intervention);
     } catch (err) {
-        if (err instanceof z.ZodError) {
-            return res.status(400).json({ message: err.errors[0].message });
-        }
-        throw err;
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
     }
   });
 
@@ -96,36 +100,36 @@ export async function registerRoutes(
   const reports = await storage.getReports();
   if (reports.length === 0) {
     console.log("Seeding data...");
-    
+
     // Create Zones
     const zone1 = await storage.createZone({
       name: "Market Square",
       riskLevel: "high",
-      latitude: 12.9716,
-      longitude: 77.5946,
+      latitude: 10.8505,
+      longitude: 76.2711,
       radius: 500
     });
-    
+
     const zone2 = await storage.createZone({
       name: "City Park",
       riskLevel: "medium",
-      latitude: 12.9750,
-      longitude: 77.5980,
+      latitude: 10.8540,
+      longitude: 76.2750,
       radius: 300
     });
 
     // Create Reports
     await storage.createReport({
-      latitude: 12.9716,
-      longitude: 77.5946,
+      latitude: 10.8505,
+      longitude: 76.2711,
       category: "aggressive",
       description: "Aggressive dog chasing bikes",
       imagePath: "https://images.unsplash.com/photo-1543466835-00a7907e9de1"
     });
 
     const report2 = await storage.createReport({
-      latitude: 12.9750,
-      longitude: 77.5980,
+      latitude: 10.8540,
+      longitude: 76.2750,
       category: "group",
       description: "Pack of 5 dogs near park entrance",
       imagePath: "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e"
@@ -133,8 +137,8 @@ export async function registerRoutes(
     await storage.updateReportStatus(report2.id, "verified");
 
     await storage.createReport({
-      latitude: 12.9730,
-      longitude: 77.5960,
+      latitude: 10.8520,
+      longitude: 76.2730,
       category: "injured",
       description: "Limping dog needs help",
       imagePath: "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9"
@@ -147,7 +151,7 @@ export async function registerRoutes(
       notes: "Caught 3 dogs for sterilization",
       date: new Date()
     });
-    
+
     console.log("Seeding complete.");
   }
 

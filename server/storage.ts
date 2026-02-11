@@ -1,23 +1,31 @@
-import { 
-  reports, zones, interventions,
+import {
+  reports, zones, interventions, users,
   type Report, type InsertReport,
   type Zone, type InsertZone,
-  type Intervention, type InsertIntervention
+  type Intervention, type InsertIntervention,
+  type User, type InsertUser
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
+  // Users
+  getUser(id: number): Promise<User | undefined>;
+  getUserByPhone(phoneNumber: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUserOtp(id: number, otp: string | null, expiresAt: Date | null): Promise<void>;
+  updateUserRole(id: number, role: string): Promise<User>;
+
   // Reports
   getReports(): Promise<Report[]>;
   getReport(id: number): Promise<Report | undefined>;
   createReport(report: InsertReport): Promise<Report>;
   updateReportStatus(id: number, status: string): Promise<Report | undefined>;
-  
+
   // Zones
   getZones(): Promise<Zone[]>;
   createZone(zone: InsertZone): Promise<Zone>;
-  
+
   // Interventions
   getInterventions(): Promise<Intervention[]>;
   createIntervention(intervention: InsertIntervention): Promise<Intervention>;
@@ -31,6 +39,35 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByPhone(phoneNumber: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async updateUserOtp(id: number, otp: string | null, expiresAt: Date | null): Promise<void> {
+    await db.update(users)
+      .set({ otp, otpExpiresAt: expiresAt })
+      .where(eq(users.id, id));
+  }
+
+  async updateUserRole(id: number, role: string): Promise<User> {
+    const [user] = await db.update(users)
+      .set({ role })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
   async getReports(): Promise<Report[]> {
     return await db.select().from(reports).orderBy(desc(reports.createdAt));
   }
@@ -73,9 +110,9 @@ export class DatabaseStorage implements IStorage {
 
   async getAnalyticsStats() {
     const allReports = await this.getReports();
-    
+
     const totalReports = allReports.length;
-    
+
     const byCategory = allReports.reduce((acc, report) => {
       acc[report.category] = (acc[report.category] || 0) + 1;
       return acc;

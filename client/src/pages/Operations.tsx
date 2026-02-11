@@ -34,8 +34,8 @@ export default function Operations() {
     defaultValues: {
       name: "",
       riskLevel: "low",
-      latitude: 51.505,
-      longitude: -0.09,
+      latitude: 10.8505,
+      longitude: 76.2711,
       radius: 500,
     },
   });
@@ -53,7 +53,7 @@ export default function Operations() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navigation />
-      
+
       <main className="flex-1 container mx-auto px-4 py-8">
         <h1 className="text-3xl font-display font-bold text-slate-900 mb-8">Operations & Zones</h1>
 
@@ -187,9 +187,9 @@ export default function Operations() {
                           <TableCell>
                             <span className={`
                               inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-                              ${zone.riskLevel === 'high' ? 'bg-red-100 text-red-800' : 
-                                zone.riskLevel === 'medium' ? 'bg-yellow-100 text-yellow-800' : 
-                                'bg-green-100 text-green-800'}
+                              ${zone.riskLevel === 'high' ? 'bg-red-100 text-red-800' :
+                                zone.riskLevel === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-green-100 text-green-800'}
                             `}>
                               {zone.riskLevel}
                             </span>

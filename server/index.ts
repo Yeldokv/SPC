@@ -2,6 +2,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import session from "express-session";
+import createMemoryStore from "memorystore";
 
 const app = express();
 const httpServer = createServer(app);
@@ -12,16 +14,36 @@ declare module "http" {
   }
 }
 
+declare module "express-session" {
+  interface SessionData {
+    userId: number;
+  }
+}
+
 app.use(
   express.json({
-    limit: '10mb',
+    limit: '50mb',
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },
   }),
 );
 
-app.use(express.urlencoded({ limit: '10mb', extended: false }));
+const MemoryStore = createMemoryStore(session);
+
+app.use(express.urlencoded({ limit: '50mb', extended: false }));
+
+app.use(
+  session({
+    cookie: { maxAge: 86400000 },
+    store: new MemoryStore({
+      checkPeriod: 86400000,
+    }),
+    resave: false,
+    saveUninitialized: false,
+    secret: "keyboard cat",
+  })
+);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -95,7 +117,6 @@ app.use((req, res, next) => {
     {
       port,
       host: "0.0.0.0",
-      reusePort: true,
     },
     () => {
       log(`serving on port ${port}`);

@@ -1,4 +1,5 @@
 import { Navigation } from "@/components/Navigation";
+import { ReportStatus } from "@shared/schema";
 import { useAnalytics, useReports, useUpdateReportStatus } from "@/hooks/use-reports";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,8 +17,8 @@ export default function AdminDashboard() {
   const { data: reports, isLoading: loadingReports } = useReports();
   const updateStatus = useUpdateReportStatus();
 
-  if (!user) {
-    return <Redirect to="/login" />;
+  if (!user || user.role !== "admin") {
+    return <Redirect to="/" />;
   }
 
   if (loadingStats || loadingReports) {
@@ -35,12 +36,12 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navigation />
-      
+
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-display font-bold text-slate-900">Dashboard</h1>
           <div className="text-sm text-muted-foreground">
-            Welcome back, {user.username}
+            Welcome back, {user.phoneNumber === "admin" ? "Administrator" : user.phoneNumber}
           </div>
         </div>
 
@@ -108,7 +109,7 @@ export default function AdminDashboard() {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="name" />
                       <YAxis allowDecimals={false} />
-                      <Tooltip 
+                      <Tooltip
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                       />
                       <Bar dataKey="value" fill="#1e3a8a" radius={[4, 4, 0, 0]} />
@@ -155,7 +156,7 @@ export default function AdminDashboard() {
                   key={report.id}
                   report={report}
                   showActions
-                  onUpdateStatus={(id, status) => updateStatus.mutate({ id, status })}
+                  onUpdateStatus={(id, status) => updateStatus.mutate({ id, status: status as ReportStatus })}
                 />
               ))}
               {reports?.length === 0 && (

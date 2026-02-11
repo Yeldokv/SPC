@@ -41,11 +41,11 @@ export default function MapPage() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Navigation />
-      
+
       <div className="flex-1 relative">
-        <MapContainer 
-          center={[51.505, -0.09]} 
-          zoom={13} 
+        <MapContainer
+          center={[10.8505, 76.2711]}
+          zoom={13}
           className="absolute inset-0 z-0"
         >
           <TileLayer
@@ -78,8 +78,8 @@ export default function MapPage() {
 
           {/* Render Reports as Markers */}
           {reports?.map((report) => (
-            <Marker 
-              key={`report-${report.id}`} 
+            <Marker
+              key={`report-${report.id}`}
               position={[report.latitude, report.longitude]}
             >
               <Popup className="custom-popup">
